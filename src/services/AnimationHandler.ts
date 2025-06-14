@@ -2,44 +2,37 @@ import { AnimationParams } from '../types/ui';
 
 interface QueuedAnimation {
   params: AnimationParams;
-  onComplete?: () => void;
 }
 
 export class AnimationHandler {
   private queue: QueuedAnimation[] = [];
   private isPlaying = false;
+  private finalCallback?: () => void;
 
   /**
-   * Maps point values to animation parameters
+   * Creates animation parameters for multiple balls
    */
-  private getAnimationParams(points: number): AnimationParams {
-    // Base parameters
-    const baseDuration = 1200; // 1.2 seconds
-    const baseIntensity = 0.8;
-
-    // Scale ball count based on points (1-5 points = 1-5 balls)
-    const ballCount = Math.min(Math.max(points, 1), 5);
-
-    // Adjust duration based on points
-    const duration = baseDuration + (points * 100);
-
-    // Adjust intensity based on points (higher points = more intense)
-    const intensity = Math.min(baseIntensity + (points * 0.05), 1);
-
+  private getBallParams(ballCount: number): AnimationParams {
     return {
-      ballCount,
-      duration,
+      ballCount: ballCount, // Use the actual ball count passed in
+      duration: 400,
       colors: ["#EF4444", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6", "#EC4899"],
-      intensity
+      intensity: 0.8
     };
   }
 
   /**
-   * Queues a new animation based on point value
+   * Queues a single animation with multiple balls based on point value
    */
   public queueAnimation(points: number, onComplete?: () => void): void {
-    const params = this.getAnimationParams(points);
-    this.queue.push({ params, onComplete });
+    // Store the final callback to be called when animation is done
+    if (onComplete) {
+      this.finalCallback = onComplete;
+    }
+
+    // Create a single animation with all balls for this completion
+    const params = this.getBallParams(points);
+    this.queue.push({ params });
 
     if (!this.isPlaying) {
       this.playNext();
@@ -52,29 +45,32 @@ export class AnimationHandler {
   private playNext(): void {
     if (this.queue.length === 0) {
       this.isPlaying = false;
+      // Call final callback when all animations are done
+      if (this.finalCallback) {
+        // Delay the callback to ensure the animation has time to complete
+        setTimeout(() => {
+          if (this.finalCallback) {
+            this.finalCallback();
+            this.finalCallback = undefined;
+          }
+        }, 500); // Give time for the animation to finish
+      }
       return;
     }
 
     this.isPlaying = true;
-    const { params, onComplete } = this.queue.shift()!;
+    const { params } = this.queue.shift()!;
 
-    // Emit animation event
+    // Emit animation event with the full ball count
     const event = new CustomEvent('animation:play', { detail: params });
     window.dispatchEvent(event);
 
-    // Set up completion handler
-    const handleComplete = () => {
-      onComplete?.();
+    // Wait for this animation to complete before starting the next one
+    // The duration should match the ball animation duration plus some buffer
+    const animationCompleteDelay = params.duration + 100;
+    setTimeout(() => {
       this.playNext();
-    };
-
-    // Listen for animation completion
-    const completeHandler = () => {
-      window.removeEventListener('animation:complete', completeHandler);
-      handleComplete();
-    };
-
-    window.addEventListener('animation:complete', completeHandler);
+    }, animationCompleteDelay);
   }
 
   /**
@@ -82,6 +78,7 @@ export class AnimationHandler {
    */
   public clearQueue(): void {
     this.queue = [];
+    this.finalCallback = undefined;
     this.isPlaying = false;
   }
 }

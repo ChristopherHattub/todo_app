@@ -377,8 +377,65 @@
   text-align: center;
   min-width: 2rem;
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
 }
 
+.taskitem-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.taskitem-badge:active {
+  transform: scale(0.98);
+}
+
+.taskitem-badge--completed {
+  cursor: default;
+  background: transparent !important;
+  color: #9ca3af;
+  border: 1px solid #d1d5db;
+}
+
+.taskitem-badge--completed:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Badge Color Draining Animation */
+.taskitem-badge--draining {
+  overflow: hidden;
+  position: relative;
+}
+
+.taskitem-badge--draining::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  border-radius: inherit;
+  animation: badgeDrain 0.8s ease-out forwards;
+  z-index: 2;
+}
+
+@keyframes badgeDrain {
+  0% {
+    background: transparent;
+    clip-path: circle(0% at 50% 50%);
+  }
+  100% {
+    background: rgba(255, 255, 255, 0.95);
+    clip-path: circle(70% at 50% 50%);
+  }
+}
+
+/* Badge Color Variants */
 .taskitem-badge--green {
   background: #10b981;
   color: #ffffff;
@@ -397,6 +454,87 @@
 .taskitem-badge--orange {
   background: #f59e0b;
   color: #ffffff;
+}
+
+/* Animation states for draining effect */
+.taskitem-badge--draining.taskitem-badge--green {
+  animation: drainGreen 0.8s ease-out forwards;
+}
+
+.taskitem-badge--draining.taskitem-badge--blue {
+  animation: drainBlue 0.8s ease-out forwards;
+}
+
+.taskitem-badge--draining.taskitem-badge--purple {
+  animation: drainPurple 0.8s ease-out forwards;
+}
+
+.taskitem-badge--draining.taskitem-badge--orange {
+  animation: drainOrange 0.8s ease-out forwards;
+}
+
+@keyframes drainGreen {
+  0% {
+    background: #10b981;
+    color: #ffffff;
+  }
+  50% {
+    background: rgba(16, 185, 129, 0.5);
+    color: rgba(255, 255, 255, 0.7);
+  }
+  100% {
+    background: transparent;
+    color: #9ca3af;
+    border-color: #d1d5db;
+  }
+}
+
+@keyframes drainBlue {
+  0% {
+    background: #3b82f6;
+    color: #ffffff;
+  }
+  50% {
+    background: rgba(59, 130, 246, 0.5);
+    color: rgba(255, 255, 255, 0.7);
+  }
+  100% {
+    background: transparent;
+    color: #9ca3af;
+    border-color: #d1d5db;
+  }
+}
+
+@keyframes drainPurple {
+  0% {
+    background: #8b5cf6;
+    color: #ffffff;
+  }
+  50% {
+    background: rgba(139, 92, 246, 0.5);
+    color: rgba(255, 255, 255, 0.7);
+  }
+  100% {
+    background: transparent;
+    color: #9ca3af;
+    border-color: #d1d5db;
+  }
+}
+
+@keyframes drainOrange {
+  0% {
+    background: #f59e0b;
+    color: #ffffff;
+  }
+  50% {
+    background: rgba(245, 158, 11, 0.5);
+    color: rgba(255, 255, 255, 0.7);
+  }
+  100% {
+    background: transparent;
+    color: #9ca3af;
+    border-color: #d1d5db;
+  }
 }
 
 /* Responsive Design */

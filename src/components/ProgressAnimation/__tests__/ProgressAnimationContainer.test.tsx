@@ -65,9 +65,8 @@ describe('ProgressAnimationContainer', () => {
     // Unmount component
     unmount();
     
-    // Check if event listeners were removed
+    // Check if event listeners were removed (only animation:play is added in useEffect)
     expect(removeEventListenerSpy).toHaveBeenCalledWith('animation:play', expect.any(Function));
-    expect(removeEventListenerSpy).toHaveBeenCalledWith('animation:complete', expect.any(Function));
   });
 
   it('handles animation completion correctly', () => {
