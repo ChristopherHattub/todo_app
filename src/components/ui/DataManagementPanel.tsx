@@ -125,56 +125,51 @@ export const DataManagementPanel: React.FC = () => {
   };
 
   return (
-    <div className="data-management-panel bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Data Management</h2>
+    <div className="data-management-panel">
+      <h2>Data Management</h2>
       
       {/* Status Message */}
       {message && (
-        <div className={`p-4 rounded-md mb-4 ${
-          messageType === 'success' ? 'bg-green-100 text-green-700 border border-green-200' :
-          messageType === 'error' ? 'bg-red-100 text-red-700 border border-red-200' :
-          'bg-blue-100 text-blue-700 border border-blue-200'
-        }`}>
+        <div className={`status-message ${messageType}`}>
           {message}
         </div>
       )}
 
       {/* Main Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="action-grid">
         <button
           onClick={handleExportData}
           disabled={isLoading}
-          className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+          className={`action-button primary ${isLoading ? 'disabled' : ''}`}
         >
           {isLoading ? (
-            <span className="animate-spin mr-2">⏳</span>
+            <span className="loading-spinner">⏳</span>
           ) : (
-            <span className="mr-2">📥</span>
+            <span>📥</span>
           )}
           Export Data
         </button>
 
-        <label className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center cursor-pointer">
-          <span className="mr-2">📤</span>
+        <label className="file-input-label">
+          <span>📤</span>
           Import Data
           <input
             type="file"
             accept=".json"
             onChange={handleImportData}
             disabled={isLoading}
-            className="hidden"
           />
         </label>
 
         <button
           onClick={handleCreateBackup}
           disabled={isLoading}
-          className="bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+          className={`action-button secondary ${isLoading ? 'disabled' : ''}`}
         >
           {isLoading ? (
-            <span className="animate-spin mr-2">⏳</span>
+            <span className="loading-spinner">⏳</span>
           ) : (
-            <span className="mr-2">💾</span>
+            <span>💾</span>
           )}
           Create Backup
         </button>
@@ -182,49 +177,49 @@ export const DataManagementPanel: React.FC = () => {
         <button
           onClick={handleValidateIntegrity}
           disabled={isLoading}
-          className="bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+          className={`action-button warning ${isLoading ? 'disabled' : ''}`}
         >
           {isLoading ? (
-            <span className="animate-spin mr-2">⏳</span>
+            <span className="loading-spinner">⏳</span>
           ) : (
-            <span className="mr-2">🔍</span>
+            <span>🔍</span>
           )}
           Validate Data
         </button>
       </div>
 
       {/* Backup Management */}
-      <div className="border-t pt-6">
+      <div className="backup-section">
         <button
           onClick={handleShowBackups}
-          className="text-gray-600 hover:text-gray-800 font-medium mb-4 flex items-center"
+          className="backup-toggle"
         >
-          <span className="mr-2">{showBackups ? '🔽' : '▶️'}</span>
+          <span>{showBackups ? '🔽' : '▶️'}</span>
           Backup Management ({getBackups().length} backups)
         </button>
 
         {showBackups && (
-          <div className="space-y-2">
+          <div className="backup-list">
             {backups.length === 0 ? (
-              <p className="text-gray-500 italic">No backups available</p>
+              <div className="empty-backups">No backups available</div>
             ) : (
               backups.map((backup) => (
                 <div
                   key={backup.key}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
+                  className="backup-item"
                 >
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-800">
+                  <div className="backup-info">
+                    <div className="backup-type">
                       {backup.type === 'manual' ? '👤 Manual Backup' : '🔄 Migration Backup'}
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="backup-timestamp">
                       {formatTimestamp(backup.timestamp)}
                     </div>
                   </div>
                   <button
                     onClick={() => handleRestoreBackup(backup.key)}
                     disabled={isLoading}
-                    className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white text-sm font-medium py-2 px-3 rounded transition-colors duration-200"
+                    className="restore-button"
                   >
                     Restore
                   </button>
@@ -236,13 +231,13 @@ export const DataManagementPanel: React.FC = () => {
       </div>
 
       {/* Help Text */}
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
-        <h3 className="font-medium text-gray-800 mb-2">Data Management Help</h3>
-        <ul className="text-sm text-gray-600 space-y-1">
-          <li>• <strong>Export:</strong> Download all your data as a JSON file</li>
-          <li>• <strong>Import:</strong> Upload and restore data from a JSON file</li>
-          <li>• <strong>Backup:</strong> Create a restore point stored locally</li>
-          <li>• <strong>Validate:</strong> Check data integrity and consistency</li>
+      <div className="help-section">
+        <h3>Data Management Help</h3>
+        <ul className="help-list">
+          <li><strong>Export:</strong> Download all your data as a JSON file</li>
+          <li><strong>Import:</strong> Upload and restore data from a JSON file</li>
+          <li><strong>Backup:</strong> Create a restore point stored locally</li>
+          <li><strong>Validate:</strong> Check data integrity and consistency</li>
         </ul>
       </div>
     </div>

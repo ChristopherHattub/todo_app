@@ -40,14 +40,14 @@ export const AppLayout: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="app-layout min-h-screen bg-gray-100">
+      <div className="app-layout">
         <AppHeader onDateSelectorClick={handleDateSelectorClick} />
         
-        <main className="app-main container mx-auto px-4 py-8">
+        <main className="app-main">
           {/* Progress Animation Section */}
           <ErrorBoundary>
             <section className="animation-section">
-              <ProgressAnimationContainer className="my-8" />
+              <ProgressAnimationContainer />
             </section>
           </ErrorBoundary>
           
@@ -61,10 +61,8 @@ export const AppLayout: React.FC = () => {
         
         {/* Entry Form Footer */}
         <ErrorBoundary>
-          <footer className="app-footer fixed bottom-0 w-full bg-white shadow-lg p-4">
-            <div className="container mx-auto">
-              <EntryForm onSubmit={handleAddTodo} />
-            </div>
+          <footer className="app-footer">
+            <EntryForm onSubmit={handleAddTodo} />
           </footer>
         </ErrorBoundary>
 

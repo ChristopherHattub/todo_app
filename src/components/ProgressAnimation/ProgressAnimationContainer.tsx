@@ -41,7 +41,7 @@ export const ProgressAnimationContainer: React.FC<ProgressAnimationContainerProp
   return (
     <div 
       data-testid="progress-animation-container"
-      className={`progress-animation-container ${className || ''}`}
+      className={`progress-animation-container ${isPlaying ? 'loading' : 'idle'} ${className || ''}`}
     >
       <AnimatePresence>
         {isPlaying && currentParams && (
@@ -49,28 +49,13 @@ export const ProgressAnimationContainer: React.FC<ProgressAnimationContainerProp
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="relative w-[240px] h-[240px] mx-auto"
+            className="animation-wrapper"
           >
-            <div 
-              className="absolute inset-0 rounded-full overflow-hidden shadow-lg"
-              style={{ 
-                background: 'radial-gradient(circle, #f0f9ff 0%, #e1f5fe 70%, #c8e6fc 100%)',
-                border: '3px solid #b3e5fc'
-              }}
-            >
+            <div className="animation-stage">
               {Array.from({ length: currentParams.ballCount }).map((_, index) => (
                 <motion.div
                   key={index}
-                  className="absolute rounded-full shadow-md"
-                  style={{
-                    width: 14,
-                    height: 14,
-                    backgroundColor: currentParams.colors[index % currentParams.colors.length],
-                    top: 0,
-                    left: '50%',
-                    x: '-50%',
-                    zIndex: index
-                  }}
+                  className={`animation-ball color-${index % 6}`}
                   initial={{ y: -240, opacity: 0, scale: 1.1 }}
                   animate={{ 
                     y: 120 + (index * 10),
