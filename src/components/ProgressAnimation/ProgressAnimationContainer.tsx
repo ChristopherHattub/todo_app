@@ -213,8 +213,19 @@ export const ProgressAnimationContainer: React.FC<ProgressAnimationContainerProp
   useEffect(() => {
     // Listen for animation play events
     const handleAnimationPlay = (event: CustomEvent<AnimationParams>) => {
-      const params = event.detail;
-      startAnimation(params.ballCount);
+      try {
+        const params = event.detail;
+        
+        // Validate event data
+        if (!params || typeof params.ballCount !== 'number' || params.ballCount < 0) {
+          console.warn('Invalid animation parameters received:', params);
+          return;
+        }
+        
+        startAnimation(params.ballCount);
+      } catch (error) {
+        console.error('Error handling animation play event:', error);
+      }
     };
 
     window.addEventListener('animation:play', handleAnimationPlay as EventListener);
@@ -233,19 +244,23 @@ export const ProgressAnimationContainer: React.FC<ProgressAnimationContainerProp
 
   // Load/save persisted balls from localStorage
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    const storedBalls = localStorage.getItem(`progress-balls-${today}`);
-    if (storedBalls) {
-      try {
-        const parsedBalls = JSON.parse(storedBalls);
-        setBalls(parsedBalls.map((ball: any) => ({ 
-          ...ball, 
-          isAnimating: false,
-          hasAnimated: true
-        })));
-      } catch (error) {
-        console.warn('Failed to load persisted balls:', error);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const storedBalls = localStorage.getItem(`progress-balls-${today}`);
+      if (storedBalls) {
+        try {
+          const parsedBalls = JSON.parse(storedBalls);
+          setBalls(parsedBalls.map((ball: any) => ({ 
+            ...ball, 
+            isAnimating: false,
+            hasAnimated: true
+          })));
+        } catch (error) {
+          console.warn('Failed to parse persisted balls JSON:', error);
+        }
       }
+    } catch (error) {
+      console.warn('Failed to load persisted balls:', error);
     }
   }, []);
 
@@ -255,7 +270,12 @@ export const ProgressAnimationContainer: React.FC<ProgressAnimationContainerProp
       ...ball,
       hasAnimated: true
     }));
-    localStorage.setItem(`progress-balls-${today}`, JSON.stringify(persistedBalls));
+    
+    try {
+      localStorage.setItem(`progress-balls-${today}`, JSON.stringify(persistedBalls));
+    } catch (error) {
+      console.warn('Failed to save progress balls to localStorage:', error);
+    }
   }, [balls]);
 
   // Container spring animation
