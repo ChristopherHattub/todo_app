@@ -1,0 +1,43 @@
+# Development Dockerfile for hot reload
+FROM node:18-alpine
+
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init curl
+
+# Set working directory
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S react -u 1001 -G nodejs
+
+# Create data directory for persistent storage
+RUN mkdir -p /app/data && chown -R react:nodejs /app/data
+
+# Copy package files first for better caching
+COPY package*.json ./
+
+# Change ownership of package files
+RUN chown -R react:nodejs /app
+
+# Switch to non-root user
+USER react
+
+# Install dependencies (including dev dependencies)
+RUN npm ci
+
+# Copy source code (this will be overridden by volume mount in development)
+COPY --chown=react:nodejs . .
+
+# Expose port 3000 for development server
+EXPOSE 3000
+
+# Health check for development
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:3000 || exit 1
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+
+# Start development server with hot reload
+CMD ["npm", "start"]
