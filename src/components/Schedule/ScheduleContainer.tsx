@@ -16,22 +16,22 @@ export const ScheduleContainer: React.FC = () => {
   const daySchedule = monthSchedule?.daySchedules.get(dayKey);
 
   const tasks = daySchedule?.todoItems || [];
-  const totalPoints = daySchedule?.totalPointValue || 0;
-  const completedPoints = daySchedule?.totalCompletedPointValue || 0;
 
   if (isLoading) {
     return (
-      <div className="schedule-container bg-white rounded-lg shadow-md p-6 min-h-[400px] flex items-center justify-center">
-        <div data-testid="loading-spinner" className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="schedule-container">
+        <div className="loading-spinner">
+          <div data-testid="loading-spinner" className="animate-spin"></div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="schedule-container bg-white rounded-lg shadow-md p-6 min-h-[400px] flex items-center justify-center">
-        <div className="text-red-600 text-center">
-          <p className="text-xl font-semibold mb-2">Error Loading Schedule</p>
+      <div className="schedule-container">
+        <div className="error-state">
+          <h3>Error Loading Schedule</h3>
           <p>{error}</p>
         </div>
       </div>
@@ -39,29 +39,11 @@ export const ScheduleContainer: React.FC = () => {
   }
 
   return (
-    <div className="schedule-container bg-white rounded-lg shadow-md overflow-hidden">
-      {/* Schedule Header */}
-      <div className="schedule-header bg-gray-50 p-4 border-b">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-bold text-gray-800">
-            {format(new Date(dayKey), 'MMMM d, yyyy')}
-          </h2>
-          <div className="text-sm text-gray-600">
-            {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
-          </div>
-        </div>
-        
-        {/* Points Summary */}
-        <div className="mt-2 text-sm text-gray-600">
-          {completedPoints} / {totalPoints} points completed
-        </div>
-      </div>
-
-      {/* Task List */}
-      <div className="schedule-content max-h-[600px] overflow-y-auto">
+    <div className="schedule-container">
+      <div className="schedule-content">
         {tasks.length === 0 ? (
-          <div className="empty-state p-8 text-center">
-            <div className="text-gray-400 mb-4">
+          <div className="empty-state">
+            <div>
               <svg
                 className="mx-auto h-12 w-12"
                 fill="none"
@@ -76,10 +58,10 @@ export const ScheduleContainer: React.FC = () => {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3>
               No tasks for this day
             </h3>
-            <p className="text-gray-500">
+            <p>
               Add a task to get started with your schedule
             </p>
           </div>

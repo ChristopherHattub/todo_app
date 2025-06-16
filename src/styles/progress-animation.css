@@ -1,0 +1,140 @@
+/* Progress Animation Container Styles */
+.progress-animation-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 2rem;
+  position: relative;
+  overflow: visible;
+}
+
+/* Animation Wrapper */
+.animation-wrapper {
+  position: relative;
+  margin: 0 auto;
+  perspective: 1000px;
+}
+
+/* Circle Boundary */
+.circle-boundary {
+  transition: all 0.3s ease-in-out;
+}
+
+.progress-animation-container.idle .circle-boundary {
+  animation: idlePulse 4s ease-in-out infinite alternate;
+}
+
+.progress-animation-container.loading .circle-boundary {
+  animation: loadingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes idlePulse {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes loadingPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.01);
+  }
+}
+
+/* Animation Ball Base Styles */
+.animation-ball {
+  will-change: transform, opacity, filter;
+  transition: transform 0.1s ease-out; /* Subtle fallback for non-animating balls */
+}
+
+/* Persisted balls subtle glow - only for non-animating balls */
+.animation-ball:not([data-animating="true"]) {
+  animation: persistedGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes persistedGlow {
+  0% {
+    filter: brightness(1) saturate(1);
+    transform: scale(1);
+  }
+  100% {
+    filter: brightness(1.1) saturate(1.2);
+    transform: scale(1.05);
+  }
+}
+
+/* Container States */
+.progress-animation-container.idle {
+  opacity: 1;
+}
+
+.progress-animation-container.loading {
+  opacity: 0.95;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .progress-animation-container {
+    min-height: 150px;
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .progress-animation-container {
+    min-height: 120px;
+    padding: 1rem;
+  }
+}
+
+/* Accessibility */
+.progress-animation-container[aria-hidden="true"] {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .circle-boundary,
+  .animation-ball {
+    animation: none !important;
+    transition: opacity 0.3s ease !important;
+  }
+
+  .progress-animation-container {
+    opacity: 0.8;
+  }
+  
+  /* Disable spring animations for reduced motion */
+  .animation-ball {
+    transform: scale(1) !important;
+    opacity: 1 !important;
+    filter: brightness(1) saturate(1) !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .circle-boundary {
+    border-width: 3px !important;
+    border-color: #000000 !important;
+  }
+
+  .animation-ball {
+    border: 1px solid #000000;
+  }
+}
+
+/* Enhanced glow effects for better visibility */
+.animation-ball {
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.2), 
+    0 0 8px var(--ball-glow-color, rgba(59, 130, 246, 0.4)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+} 

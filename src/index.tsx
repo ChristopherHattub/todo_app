@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import './styles/layout.css';
-import './styles/entry-form.css';
+// Import all component styles
+import './styles/index.css';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

@@ -13,17 +13,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onDateSelectorClick }) => 
   const formattedDate = format(selectedDate, 'MM/dd/yy');
 
   return (
-    <header className="app-header bg-gray-800 text-white p-4 shadow-md">
-      <div className="container mx-auto flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+    <header className="app-header">
+      <div className="header-container">
+        <div className="header-left">
           <button
             onClick={onDateSelectorClick}
-            className="date-selector-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200"
+            className="date-selector-btn"
             aria-label="Select date"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -37,7 +36,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onDateSelectorClick }) => 
             </svg>
             <span>Select Date</span>
           </button>
-          <div className="current-date text-xl font-bold">
+          <div className="current-date">
             {formattedDate}
           </div>
         </div>

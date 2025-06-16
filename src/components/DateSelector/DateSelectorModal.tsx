@@ -61,32 +61,30 @@ export const DateSelectorModal: React.FC<DateSelectorModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50"
+      className="date-modal-overlay"
       role="dialog"
       aria-modal="true"
       aria-label="Date Selector"
     >
       <div
         ref={modalRef}
-        className={`bg-white rounded-lg shadow-xl w-full max-w-md transform transition-transform duration-300 ${
-          isAnimating ? 'translate-y-0' : '-translate-y-full'
-        }`}
+        className={`date-modal-container ${isAnimating ? 'animating' : ''}`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="date-modal-header">
           <button
             onClick={() => handleMonthChange(-1)}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="nav-button"
             aria-label="Previous month"
           >
             ←
           </button>
-          <h2 className="text-lg font-semibold">
+          <h2 className="date-modal-title">
             {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
           </h2>
           <button
             onClick={() => handleMonthChange(1)}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="nav-button"
             aria-label="Next month"
           >
             →
@@ -94,13 +92,13 @@ export const DateSelectorModal: React.FC<DateSelectorModalProps> = ({
         </div>
 
         {/* Calendar Grid */}
-        <div ref={calendarRef} className="p-4">
+        <div ref={calendarRef} className="calendar-container">
           {/* Weekday headers */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="weekday-grid">
             {dateService.getWeekdays().map((day) => (
               <div
                 key={day}
-                className="text-center text-sm font-medium text-gray-500 py-2"
+                className="weekday-header"
               >
                 {day.slice(0, 3)}
               </div>
@@ -108,7 +106,7 @@ export const DateSelectorModal: React.FC<DateSelectorModalProps> = ({
           </div>
 
           {/* Date grid */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="date-grid">
             {calendarDays.map((date, index) => {
               const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
               const isSelected = dateService.isSameDay(date, selectedDate);
@@ -118,13 +116,7 @@ export const DateSelectorModal: React.FC<DateSelectorModalProps> = ({
                 <button
                   key={index}
                   onClick={() => handleDateSelect(date)}
-                  className={`
-                    p-2 text-center rounded-full
-                    ${!isCurrentMonth ? 'text-gray-400' : 'hover:bg-gray-100'}
-                    ${isSelected ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}
-                    ${isToday && !isSelected ? 'border-2 border-blue-500' : ''}
-                    focus:outline-none focus:ring-2 focus:ring-blue-500
-                  `}
+                  className={`date-button ${!isCurrentMonth ? 'other-month' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}`}
                   aria-selected={isSelected}
                   aria-current={isToday ? 'date' : undefined}
                 >

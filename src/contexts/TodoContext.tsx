@@ -466,8 +466,7 @@ export const TodoProvider: React.FC<TodoProviderProps> = ({ children }) => {
         } 
       });
       
-      // Trigger animation
-      animationHandler.queueAnimation(response.todo.pointValue);
+      // Animation is only triggered when tasks are completed, not when added
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to add todo';
@@ -501,6 +500,10 @@ export const TodoProvider: React.FC<TodoProviderProps> = ({ children }) => {
   };
 
   const setSelectedDate = (date: Date) => {
+    // Emit date change event for animation component
+    const dateChangeEvent = new CustomEvent('date:changed', { detail: date });
+    window.dispatchEvent(dateChangeEvent);
+    
     dispatch({ type: TodoActionType.SET_SELECTED_DATE, payload: date });
   };
 
