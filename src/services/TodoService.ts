@@ -6,23 +6,32 @@ import {
   YearSchedule,
   TodoServiceResponse
 } from '../types';
+import { ITodoService } from './interfaces/ITodoService';
+import { IStorageService } from './interfaces/IStorageService';
+import { IValidationService } from './interfaces/IValidationService';
 import { LocalStorageService } from './LocalStorageService';
+import { ValidationService } from './ValidationService';
 
 /**
  * Service for managing todo items and schedules
  */
-export class TodoService {
+export class TodoService implements ITodoService {
   private static instance: TodoService;
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  private constructor() {}
+  constructor(
+    private storageService: IStorageService,
+    private validationService: IValidationService
+  ) {}
 
   /**
-   * Get singleton instance
+   * Get singleton instance of TodoService with default dependencies
    */
   public static getInstance(): TodoService {
     if (!TodoService.instance) {
-      TodoService.instance = new TodoService();
+      TodoService.instance = new TodoService(
+        new LocalStorageService(),
+        new ValidationService()
+      );
     }
     return TodoService.instance;
   }
@@ -32,6 +41,17 @@ export class TodoService {
    */
   public async createTodo(todo: Omit<TodoItem, 'id' | 'createdAt'>, forDate?: Date): Promise<TodoServiceResponse> {
     try {
+      // Validate input
+      const validation = this.validationService.validateTodoInput({
+        title: todo.title,
+        description: todo.description,
+        pointValue: todo.pointValue.toString()
+      });
+
+      if (!validation.isValid) {
+        throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+      }
+
       const targetDate = forDate || new Date();
       const newTodo: TodoItem = {
         ...todo,
@@ -52,7 +72,7 @@ export class TodoService {
         daySchedule.incompleteTodoItems.push(newTodo);
       }
 
-      await LocalStorageService.saveDaySchedule(daySchedule);
+      await this.storageService.saveDaySchedule(daySchedule);
 
       return {
         todo: newTodo,
@@ -99,7 +119,7 @@ export class TodoService {
       }
 
       daySchedule.todoItems[todoIndex] = updatedTodo;
-      await LocalStorageService.saveDaySchedule(daySchedule);
+      await this.storageService.saveDaySchedule(daySchedule);
 
       return {
         todo: updatedTodo,
@@ -138,7 +158,7 @@ export class TodoService {
       daySchedule.completedTodoItems = daySchedule.completedTodoItems.filter(t => t.id !== todoId);
       daySchedule.incompleteTodoItems = daySchedule.incompleteTodoItems.filter(t => t.id !== todoId);
 
-      await LocalStorageService.saveDaySchedule(daySchedule);
+      await this.storageService.saveDaySchedule(daySchedule);
 
       return {
         todo: deletedTodo,
@@ -178,7 +198,7 @@ export class TodoService {
    */
   public async getDaySchedule(date: Date): Promise<DaySchedule> {
     try {
-      const response = await LocalStorageService.loadDaySchedule(date);
+      const response = await this.storageService.loadDaySchedule(date);
       if (!response.success || !response.data) {
         // Create new day schedule if none exists
         return {
@@ -224,7 +244,7 @@ export class TodoService {
    */
   public async getYearSchedule(year: number): Promise<YearSchedule> {
     try {
-      const response = await LocalStorageService.loadYearSchedule(year);
+      const response = await this.storageService.loadYearSchedule(year);
       if (!response.success || !response.data) {
         return {
           year,
@@ -275,5 +295,12 @@ export class TodoService {
       return new Error(`${message}: ${error.message}`);
     }
     return new Error(message);
+  }
+
+  /**
+   * Dispose of resources
+   */
+  public async dispose(): Promise<void> {
+    // Cleanup if needed - for now nothing specific to clean up
   }
 } 

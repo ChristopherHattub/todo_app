@@ -1,12 +1,13 @@
 import { AnimationParams } from '../types/ui';
+import { IAnimationService } from './interfaces/IAnimationService';
 
 interface QueuedAnimation {
   params: AnimationParams;
 }
 
-export class AnimationHandler {
+export class AnimationHandler implements IAnimationService {
   private queue: QueuedAnimation[] = [];
-  private isPlaying = false;
+  private _isPlaying = false;
   private finalCallback?: () => void;
 
   /**
@@ -34,9 +35,47 @@ export class AnimationHandler {
     const params = this.getBallParams(points);
     this.queue.push({ params });
 
-    if (!this.isPlaying) {
+    if (!this._isPlaying) {
       this.playNext();
     }
+  }
+
+  /**
+   * Queues animation with task movement (for now, same as regular animation)
+   */
+  public queueAnimationWithTaskMovement(points: number, todoId: string, onComplete?: () => void): void {
+    // For now, implement the same as queueAnimation
+    // In future this could include special effects for task completion
+    this.queueAnimation(points, onComplete);
+  }
+
+  /**
+   * Check if animations are currently playing
+   */
+  public isPlaying(): boolean {
+    return this._isPlaying;
+  }
+
+  /**
+   * Get the number of queued animations
+   */
+  public getQueueLength(): number {
+    return this.queue.length;
+  }
+
+  /**
+   * Set animation parameters (for configuration)
+   */
+  public setAnimationParams(params: Partial<AnimationParams>): void {
+    // For now, this could be expanded to store custom animation settings
+    // Currently the getBallParams method uses hardcoded values
+  }
+
+  /**
+   * Get animation parameters for a given point value
+   */
+  public getAnimationParams(points: number): AnimationParams {
+    return this.getBallParams(points);
   }
 
   /**
@@ -44,7 +83,7 @@ export class AnimationHandler {
    */
   private playNext(): void {
     if (this.queue.length === 0) {
-      this.isPlaying = false;
+      this._isPlaying = false;
       // Call final callback when all animations are done
       if (this.finalCallback) {
         // Delay the callback to ensure the animation has time to complete
@@ -58,7 +97,7 @@ export class AnimationHandler {
       return;
     }
 
-    this.isPlaying = true;
+    this._isPlaying = true;
     const { params } = this.queue.shift()!;
 
     // Emit animation event with the full ball count
@@ -79,9 +118,16 @@ export class AnimationHandler {
   public clearQueue(): void {
     this.queue = [];
     this.finalCallback = undefined;
-    this.isPlaying = false;
+    this._isPlaying = false;
+  }
+
+  /**
+   * Dispose of resources
+   */
+  public dispose(): void {
+    this.clearQueue();
   }
 }
 
-// Create singleton instance
+// Create singleton instance for backward compatibility
 export const animationHandler = new AnimationHandler(); 

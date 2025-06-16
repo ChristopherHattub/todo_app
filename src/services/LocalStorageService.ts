@@ -1,16 +1,65 @@
 import { YearSchedule, MonthSchedule, DaySchedule, StorageResponse, ServiceError } from '../types';
+import { IStorageService } from './interfaces/IStorageService';
 
 /**
  * Service for handling local storage operations with error handling and data compression
  */
-export class LocalStorageService {
-  private static readonly STORAGE_PREFIX = 'todo_app_';
-  private static readonly COMPRESSION_ENABLED = true;
+export class LocalStorageService implements IStorageService {
+  private readonly STORAGE_PREFIX = 'todo_app_';
+  private readonly COMPRESSION_ENABLED = true;
+  private static instance: LocalStorageService;
+
+  /**
+   * Get singleton instance
+   */
+  public static getInstance(): LocalStorageService {
+    if (!LocalStorageService.instance) {
+      LocalStorageService.instance = new LocalStorageService();
+    }
+    return LocalStorageService.instance;
+  }
+
+  // Static methods for compatibility with existing code
+  public static async saveYearSchedule(yearSchedule: YearSchedule): Promise<StorageResponse<YearSchedule>> {
+    return LocalStorageService.getInstance().saveYearSchedule(yearSchedule);
+  }
+
+  public static async loadYearSchedule(year: number): Promise<StorageResponse<YearSchedule | null>> {
+    return LocalStorageService.getInstance().loadYearSchedule(year);
+  }
+
+  public static async saveDaySchedule(daySchedule: DaySchedule): Promise<StorageResponse<DaySchedule>> {
+    return LocalStorageService.getInstance().saveDaySchedule(daySchedule);
+  }
+
+  public static async loadDaySchedule(date: Date): Promise<StorageResponse<DaySchedule | null>> {
+    return LocalStorageService.getInstance().loadDaySchedule(date);
+  }
+
+  public static async exportData(): Promise<StorageResponse<string>> {
+    return LocalStorageService.getInstance().exportData();
+  }
+
+  public static async importData(data: string): Promise<StorageResponse<void>> {
+    return LocalStorageService.getInstance().importData(data);
+  }
+
+  public static async clearAllData(): Promise<StorageResponse<void>> {
+    return LocalStorageService.getInstance().clearAllData();
+  }
+
+  public static isStorageAvailable(): boolean {
+    return LocalStorageService.getInstance().isStorageAvailable();
+  }
+
+  public static getStorageInfo(): { used: number; available: number; type: string } {
+    return LocalStorageService.getInstance().getStorageInfo();
+  }
 
   /**
    * Save a year schedule to local storage
    */
-  public static async saveYearSchedule(yearSchedule: YearSchedule): Promise<StorageResponse<YearSchedule>> {
+  public async saveYearSchedule(yearSchedule: YearSchedule): Promise<StorageResponse<YearSchedule>> {
     try {
       const key = this.getStorageKey('year', yearSchedule.year.toString());
       const data = this.COMPRESSION_ENABLED 
@@ -31,7 +80,7 @@ export class LocalStorageService {
   /**
    * Load a year schedule from local storage
    */
-  public static async loadYearSchedule(year: number): Promise<StorageResponse<YearSchedule | null>> {
+  public async loadYearSchedule(year: number): Promise<StorageResponse<YearSchedule | null>> {
     try {
       const key = this.getStorageKey('year', year.toString());
       const data = localStorage.getItem(key);
@@ -60,7 +109,7 @@ export class LocalStorageService {
   /**
    * Save a day schedule to local storage
    */
-  public static async saveDaySchedule(daySchedule: DaySchedule): Promise<StorageResponse<DaySchedule>> {
+  public async saveDaySchedule(daySchedule: DaySchedule): Promise<StorageResponse<DaySchedule>> {
     try {
       const key = this.getStorageKey('day', daySchedule.date);
       const data = this.COMPRESSION_ENABLED
@@ -81,7 +130,7 @@ export class LocalStorageService {
   /**
    * Load a day schedule from local storage
    */
-  public static async loadDaySchedule(date: Date): Promise<StorageResponse<DaySchedule | null>> {
+  public async loadDaySchedule(date: Date): Promise<StorageResponse<DaySchedule | null>> {
     try {
       const key = this.getStorageKey('day', date.toISOString().split('T')[0]);
       const data = localStorage.getItem(key);
@@ -109,7 +158,7 @@ export class LocalStorageService {
   /**
    * Export all data as a JSON string
    */
-  public static async exportData(): Promise<StorageResponse<string>> {
+  public async exportData(): Promise<StorageResponse<string>> {
     try {
       const data: Record<string, any> = {};
       
@@ -140,7 +189,7 @@ export class LocalStorageService {
   /**
    * Import data from a JSON string
    */
-  public static async importData(data: string): Promise<StorageResponse<void>> {
+  public async importData(data: string): Promise<StorageResponse<void>> {
     try {
       const importedData = JSON.parse(data);
       
@@ -167,7 +216,7 @@ export class LocalStorageService {
   /**
    * Clear all application data from local storage
    */
-  public static async clearAllData(): Promise<StorageResponse<void>> {
+  public async clearAllData(): Promise<StorageResponse<void>> {
     try {
       const keysToRemove: string[] = [];
       
@@ -194,28 +243,61 @@ export class LocalStorageService {
   /**
    * Check if local storage is available
    */
-  public static isStorageAvailable(): boolean {
+  public isStorageAvailable(): boolean {
     try {
       const testKey = '__storage_test__';
       localStorage.setItem(testKey, testKey);
       localStorage.removeItem(testKey);
       return true;
-    } catch (e) {
+    } catch {
       return false;
+    }
+  }
+
+  /**
+   * Get storage information
+   */
+  public getStorageInfo(): { used: number; available: number; type: string } {
+    try {
+      let totalSize = 0;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          const value = localStorage.getItem(key);
+          if (value) {
+            totalSize += key.length + value.length;
+          }
+        }
+      }
+      
+      // Estimate localStorage limit (usually 5-10MB)
+      const estimatedLimit = 5 * 1024 * 1024; // 5MB
+      
+      return {
+        used: totalSize,
+        available: estimatedLimit - totalSize,
+        type: 'localStorage'
+      };
+    } catch {
+      return {
+        used: 0,
+        available: 0,
+        type: 'localStorage'
+      };
     }
   }
 
   /**
    * Get storage key with prefix
    */
-  private static getStorageKey(type: 'year' | 'day', identifier: string): string {
+  private getStorageKey(type: 'year' | 'day', identifier: string): string {
     return `${this.STORAGE_PREFIX}${type}_${identifier}`;
   }
 
   /**
    * Handle storage errors and create appropriate error response
    */
-  private static handleStorageError(error: unknown, message: string): StorageResponse<any> {
+  private handleStorageError(error: unknown, message: string): StorageResponse<any> {
     const serviceError: ServiceError = {
       type: 'STORAGE',
       message: error instanceof Error ? error.message : message,
@@ -234,7 +316,7 @@ export class LocalStorageService {
   /**
    * Check if error is due to storage quota being exceeded
    */
-  private static isQuotaExceededError(error: unknown): boolean {
+  private isQuotaExceededError(error: unknown): boolean {
     return error instanceof DOMException && (
       error.name === 'QuotaExceededError' ||
       error.name === 'NS_ERROR_DOM_QUOTA_REACHED'
@@ -245,7 +327,7 @@ export class LocalStorageService {
    * Compress data using a simple compression algorithm
    * In a real application, you might want to use a more robust compression library
    */
-  private static async compressData<T>(data: T): Promise<string> {
+  private async compressData<T>(data: T): Promise<string> {
     const jsonString = JSON.stringify(data);
     // Simple compression: remove whitespace and encode special characters
     return jsonString.replace(/\s+/g, '').replace(/[<>]/g, c => 
@@ -256,7 +338,7 @@ export class LocalStorageService {
   /**
    * Decompress data
    */
-  private static async decompressData<T>(data: string): Promise<T> {
+  private async decompressData<T>(data: string): Promise<T> {
     // Simple decompression: decode special characters
     const decompressed = data.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
     return JSON.parse(decompressed);
@@ -265,7 +347,7 @@ export class LocalStorageService {
   /**
    * Helper to revive a YearSchedule from plain object, reconstructing Maps
    */
-  private static reviveYearSchedule(obj: any): YearSchedule {
+  private reviveYearSchedule(obj: any): YearSchedule {
     const yearSchedule: YearSchedule = {
       ...obj,
       monthSchedules: new Map<string, MonthSchedule>(),
@@ -281,16 +363,18 @@ export class LocalStorageService {
   /**
    * Helper to revive a MonthSchedule from plain object, reconstructing Maps
    */
-  private static reviveMonthSchedule(obj: any): MonthSchedule {
+  private reviveMonthSchedule(obj: any): MonthSchedule {
     const monthSchedule: MonthSchedule = {
       ...obj,
-      daySchedules: new Map<string, DaySchedule>(),
+      daySchedules: new Map(Object.entries(obj.daySchedules || {}))
     };
-    if (obj.daySchedules && typeof obj.daySchedules === 'object') {
-      for (const [date, dayObj] of Object.entries(obj.daySchedules)) {
-        monthSchedule.daySchedules.set(date, dayObj as DaySchedule);
-      }
-    }
     return monthSchedule;
+  }
+
+  /**
+   * Dispose of resources
+   */
+  public async dispose(): Promise<void> {
+    // Cleanup if needed - for localStorage no specific cleanup required
   }
 } 

@@ -1,20 +1,12 @@
 import React from 'react';
-import { AppLayout } from './components/Layout/AppLayout';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { TodoProvider } from './contexts/TodoContext';
+import { TodoApp } from './components/containers/TodoApp';
 
 /**
  * Main application component - Integration Phase 6
- * Includes all providers and error boundaries for full application functionality
+ * Now using the new modular architecture with DI, state management, and error boundaries
  */
 const App: React.FC = () => {
-  return (
-    <ErrorBoundary>
-      <TodoProvider>
-        <AppLayout />
-      </TodoProvider>
-    </ErrorBoundary>
-  );
+  return <TodoApp />;
 };
 
 export default App; 

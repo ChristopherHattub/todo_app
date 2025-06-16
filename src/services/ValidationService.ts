@@ -1,88 +1,52 @@
 import { ValidationResult } from '../types/services';
 import { TodoItem, DaySchedule, YearSchedule, EntryFormData } from '../types';
+import { IValidationService } from './interfaces/IValidationService';
 
 /**
  * Service for handling input validation and data integrity checks
  */
-export class ValidationService {
-  private static instance: ValidationService;
+export class ValidationService implements IValidationService {
   private readonly XSS_PATTERNS = [
     /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+    /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi,
+    /<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi,
+    /<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi,
+    /<form\b[^<]*(?:(?!<\/form>)<[^<]*)*<\/form>/gi,
+    /<link\b[^>]*>/gi,
+    /<meta\b[^>]*>/gi,
     /javascript:/gi,
-    /on\w+\s*=/gi,
-    /data:/gi,
     /vbscript:/gi,
-    /expression\s*\(/gi,
-    /eval\s*\(/gi,
-    /alert\s*\(/gi,
-    /document\./gi,
-    /window\./gi,
-    /location\./gi,
+    /data:text\/html/gi,
+    /onload\s*=/gi,
+    /onclick\s*=/gi,
+    /onerror\s*=/gi,
+    /onmouseover\s*=/gi,
+    /onfocus\s*=/gi,
+    /onblur\s*=/gi,
+    /onchange\s*=/gi,
+    /onsubmit\s*=/gi,
+    /onkeydown\s*=/gi,
+    /onkeyup\s*=/gi,
+    /onkeypress\s*=/gi,
     /document\.cookie/gi,
+    /window\.location/gi,
+    /eval\s*\(/gi,
+    /setTimeout\s*\(/gi,
+    /setInterval\s*\(/gi,
+    /Function\s*\(/gi,
+    /XMLHttpRequest/gi,
+    /fetch\s*\(/gi,
+    /alert\s*\(/gi,
+    /confirm\s*\(/gi,
+    /prompt\s*\(/gi,
     /document\.write/gi,
-    /document\.domain/gi,
-    /document\.referrer/gi,
-    /document\.location/gi,
-    /document\.URL/gi,
-    /document\.URLUnencoded/gi,
-    /document\.baseURI/gi,
-    /document\.images/gi,
-    /document\.forms/gi,
-    /document\.links/gi,
-    /document\.anchors/gi,
-    /document\.applets/gi,
-    /document\.embeds/gi,
-    /document\.plugins/gi,
-    /document\.scripts/gi,
-    /document\.styleSheets/gi,
-    /document\.title/gi,
-    /document\.body/gi,
-    /document\.all/gi,
+    /document\.writeln/gi,
+    /document\.createElement/gi,
     /document\.getElementById/gi,
     /document\.getElementsByTagName/gi,
     /document\.getElementsByClassName/gi,
     /document\.querySelector/gi,
     /document\.querySelectorAll/gi,
-    /document\.createElement/gi,
-    /document\.createTextNode/gi,
-    /document\.createDocumentFragment/gi,
-    /document\.createAttribute/gi,
-    /document\.createEvent/gi,
-    /document\.createRange/gi,
-    /document\.createTreeWalker/gi,
-    /document\.importNode/gi,
-    /document\.adoptNode/gi,
-    /document\.normalize/gi,
-    /document\.renameNode/gi,
-    /document\.open/gi,
-    /document\.close/gi,
-    /document\.execCommand/gi,
-    /document\.queryCommandEnabled/gi,
-    /document\.queryCommandIndeterm/gi,
-    /document\.queryCommandState/gi,
-    /document\.queryCommandSupported/gi,
-    /document\.queryCommandValue/gi,
-    /document\.getElementsByName/gi,
-    /document\.getElementsByTagNameNS/gi,
-    /document\.getElementsByClassName/gi,
-    /document\.getElementById/gi,
-    /document\.querySelector/gi,
-    /document\.querySelectorAll/gi,
-    /document\.createElement/gi,
-    /document\.createElementNS/gi,
-    /document\.createTextNode/gi,
-    /document\.createDocumentFragment/gi,
-    /document\.createAttribute/gi,
-    /document\.createAttributeNS/gi,
-    /document\.createEvent/gi,
-    /document\.createRange/gi,
-    /document\.createTreeWalker/gi,
-    /document\.importNode/gi,
-    /document\.adoptNode/gi,
-    /document\.normalize/gi,
-    /document\.renameNode/gi,
-    /document\.open/gi,
-    /document\.close/gi,
     /document\.execCommand/gi,
     /document\.queryCommandEnabled/gi,
     /document\.queryCommandIndeterm/gi,
@@ -90,18 +54,6 @@ export class ValidationService {
     /document\.queryCommandSupported/gi,
     /document\.queryCommandValue/gi,
   ];
-
-  private constructor() {}
-
-  /**
-   * Get singleton instance
-   */
-  public static getInstance(): ValidationService {
-    if (!ValidationService.instance) {
-      ValidationService.instance = new ValidationService();
-    }
-    return ValidationService.instance;
-  }
 
   /**
    * Validate todo input data
@@ -305,14 +257,14 @@ export class ValidationService {
   /**
    * Check if a string contains XSS patterns
    */
-  private containsXSS(str: string): boolean {
+  public containsXSS(str: string): boolean {
     return this.XSS_PATTERNS.some(pattern => pattern.test(str));
   }
 
   /**
    * Sanitize a string to prevent XSS
    */
-  private sanitizeString(str: string): string {
+  public sanitizeString(str: string): string {
     if (!str) return str;
     return str
       .replace(/&/g, '&amp;')
@@ -326,7 +278,7 @@ export class ValidationService {
   /**
    * Check if a string is a valid ISO date
    */
-  private isValidISODate(str: string): boolean {
+  public isValidDate(str: string): boolean {
     const regex = /^\d{4}-\d{2}-\d{2}$/;
     if (!regex.test(str)) return false;
     const date = new Date(str);
@@ -336,11 +288,25 @@ export class ValidationService {
   /**
    * Check if a string is a valid month format (YYYY-MM)
    */
-  private isValidMonthString(str: string): boolean {
+  public isValidMonth(str: string): boolean {
     const regex = /^\d{4}-\d{2}$/;
     if (!regex.test(str)) return false;
     const [year, month] = str.split('-').map(Number);
     return year >= 1900 && year <= 2100 && month >= 1 && month <= 12;
+  }
+
+  /**
+   * Check if a string is a valid ISO date (private method for internal use)
+   */
+  private isValidISODate(str: string): boolean {
+    return this.isValidDate(str);
+  }
+
+  /**
+   * Check if a string is a valid month format (private method for internal use)
+   */
+  private isValidMonthString(str: string): boolean {
+    return this.isValidMonth(str);
   }
 
   /**

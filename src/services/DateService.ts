@@ -1,15 +1,14 @@
+import { IDateService } from './interfaces/IDateService';
+
 /**
  * Service for handling date operations and calendar functionality
  */
-export class DateService {
+export class DateService implements IDateService {
   private static instance: DateService;
   private readonly weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  private constructor() {}
-
   /**
-   * Get singleton instance
+   * Get singleton instance of DateService
    */
   public static getInstance(): DateService {
     if (!DateService.instance) {
@@ -22,9 +21,9 @@ export class DateService {
    * Format date for display (MM/DD/YY)
    */
   public formatDisplayDate(date: Date): string {
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = String(date.getFullYear()).slice(-2);
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const year = String(date.getUTCFullYear()).slice(-2);
     return `${month}/${day}/${year}`;
   }
 
@@ -32,7 +31,10 @@ export class DateService {
    * Format date as ISO date string (YYYY-MM-DD)
    */
   public formatISODate(date: Date): string {
-    return date.toISOString().split('T')[0];
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   /**
