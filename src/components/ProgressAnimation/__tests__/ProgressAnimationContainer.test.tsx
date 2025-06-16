@@ -5,6 +5,26 @@ import { ProgressAnimationContainer } from '../ProgressAnimationContainer';
 import { animationHandler } from '../../../services/AnimationHandler';
 import { AnimationParams } from '../../../types/ui';
 
+// Mock DateContext
+const mockDateState = {
+  currentDate: new Date('2024-01-15T00:00:00.000Z'),
+  selectedDate: new Date('2024-01-15T00:00:00.000Z'),
+  currentMonth: new Date('2024-01-01T00:00:00.000Z'),
+  isDateSelectorOpen: false,
+};
+
+const mockDateContext = {
+  state: mockDateState,
+  setSelectedDate: jest.fn(),
+  navigateToMonth: jest.fn(),
+  openDateSelector: jest.fn(),
+  closeDateSelector: jest.fn(),
+};
+
+jest.mock('../../../contexts/DateContext', () => ({
+  useDateContext: () => mockDateContext,
+}));
+
 // Mock react-spring
 let mockOnRestCallbacks: (() => void)[] = [];
 let mockOnStartCallbacks: (() => void)[] = [];
@@ -501,8 +521,8 @@ describe('ProgressAnimationContainer', () => {
   });
 
   describe('localStorage persistence', () => {
-    const today = '2024-01-15';
-    const storageKey = `progress-balls-${today}`;
+    const selectedDate = '2024-01-15';
+    const storageKey = `progress-balls-${selectedDate}`;
 
     it('loads persisted balls from localStorage on mount', () => {
       const persistedBalls = [
@@ -591,7 +611,7 @@ describe('ProgressAnimationContainer', () => {
   });
 
   describe('date changes', () => {
-    it('clears balls when date changes', async () => {
+    it('saves current balls and loads balls for new date when date changes', async () => {
       render(<ProgressAnimationContainer />);
       
       // Add some balls first
@@ -613,17 +633,50 @@ describe('ProgressAnimationContainer', () => {
         expect(balls).toHaveLength(2);
       });
 
+      // Mock localStorage for the new date
+      const newDate = new Date('2024-01-16T00:00:00.000Z');
+      const newDateKey = '2024-01-16';
+      const newDateBalls = [
+        {
+          id: 'ball-old-0',
+          colorIndex: 1,
+          x: 72,
+          y: 72,
+          layer: 0,
+          isAnimating: false,
+          hasAnimated: true
+        }
+      ];
+      
+      mockLocalStorage.getItem.mockImplementation((key) => {
+        if (key === `progress-balls-${newDateKey}`) {
+          return JSON.stringify(newDateBalls);
+        }
+        return null;
+      });
+
       // Trigger date change
       act(() => {
-        const event = new Event('date:changed');
+        const event = new CustomEvent('date:changed', { detail: newDate });
         window.dispatchEvent(event);
       });
 
-      // Balls should be cleared
+      // Should save balls for previous date and load balls for new date
+      await waitFor(() => {
+        expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+          'progress-balls-2024-01-15',
+          expect.any(String)
+        );
+        expect(mockLocalStorage.getItem).toHaveBeenCalledWith(
+          `progress-balls-${newDateKey}`
+        );
+      });
+
+      // Should now show the balls from the new date
       await waitFor(() => {
         const balls = screen.getByTestId('progress-animation-container')
           .querySelectorAll('.animation-ball');
-        expect(balls).toHaveLength(0);
+        expect(balls).toHaveLength(1);
       });
     });
   });

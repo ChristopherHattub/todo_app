@@ -5,6 +5,26 @@ import { ProgressAnimationContainer } from '../ProgressAnimationContainer';
 import { AnimationHandler, animationHandler } from '../../../services/AnimationHandler';
 import { AnimationParams } from '../../../types/ui';
 
+// Mock DateContext
+const mockDateState = {
+  currentDate: new Date('2024-01-15T00:00:00.000Z'),
+  selectedDate: new Date('2024-01-15T00:00:00.000Z'),
+  currentMonth: new Date('2024-01-01T00:00:00.000Z'),
+  isDateSelectorOpen: false,
+};
+
+const mockDateContext = {
+  state: mockDateState,
+  setSelectedDate: jest.fn(),
+  navigateToMonth: jest.fn(),
+  openDateSelector: jest.fn(),
+  closeDateSelector: jest.fn(),
+};
+
+jest.mock('../../../contexts/DateContext', () => ({
+  useDateContext: () => mockDateContext,
+}));
+
 // Mock react-spring for consistent testing
 jest.mock('@react-spring/web', () => ({
   useSpring: jest.fn((config) => ({

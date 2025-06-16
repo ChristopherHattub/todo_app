@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSpring, animated, config } from '@react-spring/web';
 import { AnimationParams } from '../../types/ui';
+import { useDateContext } from '../../contexts/DateContext';
 
 interface ProgressAnimationContainerProps {
   className?: string;
@@ -79,6 +80,8 @@ const AnimatedBall: React.FC<AnimatedBallProps> = ({ ball, ballSize, colors, onA
 export const ProgressAnimationContainer: React.FC<ProgressAnimationContainerProps> = ({ className }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [balls, setBalls] = useState<BallData[]>([]);
+  const { state: dateState } = useDateContext();
+  const previousDateRef = useRef<Date>(dateState.selectedDate);
 
   // Circle parameters - 2 inch diameter = 144px at 72 DPI
   const CONTAINER_SIZE = 144;
@@ -97,6 +100,51 @@ export const ProgressAnimationContainer: React.FC<ProgressAnimationContainerProp
     "#8B5CF6", // violet
     "#EC4899"  // pink
   ];
+
+  // Helper function to get date string for localStorage key
+  const getDateKey = (date: Date): string => {
+    return date.toISOString().slice(0, 10);
+  };
+
+  // Helper function to load balls for a specific date
+  const loadBallsForDate = (date: Date): BallData[] => {
+    try {
+      const dateKey = getDateKey(date);
+      const storedBalls = localStorage.getItem(`progress-balls-${dateKey}`);
+      if (storedBalls) {
+        try {
+          const parsedBalls = JSON.parse(storedBalls);
+          return parsedBalls.map((ball: any) => ({ 
+            ...ball, 
+            isAnimating: false,
+            hasAnimated: true
+          }));
+        } catch (error) {
+          console.warn('Failed to parse persisted balls JSON:', error);
+          return [];
+        }
+      }
+      return [];
+    } catch (error) {
+      console.warn('Failed to load persisted balls:', error);
+      return [];
+    }
+  };
+
+  // Helper function to save balls for a specific date
+  const saveBallsForDate = (balls: BallData[], date: Date) => {
+    try {
+      const dateKey = getDateKey(date);
+      const persistedBalls = balls.filter(ball => !ball.isAnimating).map(ball => ({
+        ...ball,
+        hasAnimated: true
+      }));
+      
+      localStorage.setItem(`progress-balls-${dateKey}`, JSON.stringify(persistedBalls));
+    } catch (error) {
+      console.warn('Failed to save progress balls to localStorage:', error);
+    }
+  };
 
   // Generate clustered ball positions that fill the circle gradually
   const generateBallPositions = (ballCount: number): BallData[] => {
@@ -232,51 +280,46 @@ export const ProgressAnimationContainer: React.FC<ProgressAnimationContainerProp
     return () => window.removeEventListener('animation:play', handleAnimationPlay as EventListener);
   }, []);
 
-  // Reset balls when date changes
+  // Handle date changes - save current balls and load balls for new date
   useEffect(() => {
-    const handleDateChange = () => {
-      setBalls([]);
+    const handleDateChange = (event: CustomEvent<Date>) => {
+      try {
+        const newDate = event.detail;
+        
+        // Save current balls for the previous date before switching
+        if (balls.length > 0) {
+          saveBallsForDate(balls, previousDateRef.current);
+        }
+
+        // Load balls for the new date
+        const newBalls = loadBallsForDate(newDate);
+        setBalls(newBalls);
+        
+        // Update the previous date ref
+        previousDateRef.current = newDate;
+      } catch (error) {
+        console.warn('Error handling date change:', error);
+        setBalls([]);
+      }
     };
 
-    window.addEventListener('date:changed', handleDateChange);
-    return () => window.removeEventListener('date:changed', handleDateChange);
-  }, []);
-
-  // Load/save persisted balls from localStorage
-  useEffect(() => {
-    try {
-      const today = new Date().toISOString().slice(0, 10);
-      const storedBalls = localStorage.getItem(`progress-balls-${today}`);
-      if (storedBalls) {
-        try {
-          const parsedBalls = JSON.parse(storedBalls);
-          setBalls(parsedBalls.map((ball: any) => ({ 
-            ...ball, 
-            isAnimating: false,
-            hasAnimated: true
-          })));
-        } catch (error) {
-          console.warn('Failed to parse persisted balls JSON:', error);
-        }
-      }
-    } catch (error) {
-      console.warn('Failed to load persisted balls:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    const persistedBalls = balls.filter(ball => !ball.isAnimating).map(ball => ({
-      ...ball,
-      hasAnimated: true
-    }));
-    
-    try {
-      localStorage.setItem(`progress-balls-${today}`, JSON.stringify(persistedBalls));
-    } catch (error) {
-      console.warn('Failed to save progress balls to localStorage:', error);
-    }
+    window.addEventListener('date:changed', handleDateChange as EventListener);
+    return () => window.removeEventListener('date:changed', handleDateChange as EventListener);
   }, [balls]);
+
+  // Load balls for the selected date on mount and sync previousDateRef
+  useEffect(() => {
+    const ballsForDate = loadBallsForDate(dateState.selectedDate);
+    setBalls(ballsForDate);
+    previousDateRef.current = dateState.selectedDate;
+  }, []); // Only run on mount
+
+  // Save balls when they change (for the current selected date)
+  useEffect(() => {
+    if (balls.length > 0) {
+      saveBallsForDate(balls, dateState.selectedDate);
+    }
+  }, [balls, dateState.selectedDate]);
 
   // Container spring animation
   const containerSpring = useSpring({
