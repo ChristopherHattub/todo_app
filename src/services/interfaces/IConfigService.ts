@@ -28,6 +28,12 @@ export interface AppConfig {
     enableBackups: boolean;
     enableAnalytics: boolean;
   };
+  performance: {
+    maxTodos: number;
+    debounceDelay: number;
+    animationFps: number;
+    cacheSize: number;
+  };
 }
 
 export interface IConfigService {

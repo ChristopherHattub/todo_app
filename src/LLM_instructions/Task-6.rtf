@@ -1,0 +1,166 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2706
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww30040\viewh16080\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 ## TASK-006: Create Animation Integration\
+**Priority:** P1  \
+**Category:** FEATURE_INTEGRATION  \
+**Estimated Time:** 2 hours\
+\
+**Description:** Integrate the existing ball animation system with the new modular architecture, ensuring proper service injection and state management.\
+\
+### Implementation Steps:\
+\
+#### 1. Update Animation Service Implementation\
+**File:** `src/services/AnimationService.ts`\
+**Purpose:** Convert existing AnimationHandler into a proper service that implements IAnimationService interface\
+**Context:** This service manages the ball drop animation queue and integrates with the React animation component\
+\
+**Key Functionality:**\
+- Implement IAnimationService interface\
+- Manage animation queue for multiple ball drops\
+- Provide configuration for animation parameters (duration, physics, colors)\
+- Handle animation state (playing, queue length)\
+- Integrate with dependency injection container\
+\
+**Integration Points:**\
+- Uses IConfigService for animation settings\
+- Called by TodoOperations hook when tasks are completed\
+- Provides data to AnimationContainer component\
+\
+```typescript\
+// src/services/AnimationService.ts - Stub\
+export class AnimationService implements IAnimationService \{\
+  private animationQueue: AnimationQueueItem[] = [];\
+  private isCurrentlyPlaying: boolean = false;\
+  \
+  constructor(private configService: IConfigService) \{\}\
+  \
+  queueAnimation(points: number, onComplete?: () => void): void \{\
+    // Add animation to queue based on points value\
+  \}\
+  \
+  // ... other interface methods\
+\}\
+```\
+\
+#### 2. Create Animation Container Component\
+**File:** `src/components/containers/AnimationContainer.tsx`\
+**Purpose:** Container component that connects the animation service to the presentation layer\
+**Context:** Manages animation state and triggers ball drops based on service events\
+\
+**Key Functionality:**\
+- Subscribe to animation service events\
+- Manage animation component state (balls, positions, triggers)\
+- Handle animation completion callbacks\
+- Integrate with todo completion events\
+\
+**Integration Points:**\
+- Uses useService hook to get AnimationService\
+- Listens to todo completion events from state\
+- Renders CircleFillAnimation presentation component\
+\
+```typescript\
+// src/components/containers/AnimationContainer.tsx - Stub\
+export const AnimationContainer: React.FC = () => \{\
+  const animationService = useService(SERVICE_TOKENS.ANIMATION_SERVICE);\
+  const [animationState, setAnimationState] = useState(/* ... */);\
+  \
+  // Subscribe to animation queue changes\
+  // Handle ball drop triggers\
+  // Manage animation completion\
+  \
+  return <CircleFillAnimation /* props */ />;\
+\};\
+```\
+\
+#### 3. Update Existing Animation Component\
+**File:** `src/components/presentation/CircleFillAnimation.tsx`\
+**Purpose:** Convert existing animation component to pure presentation component\
+**Context:** Remove direct business logic and make it controlled by container component\
+\
+**Key Functionality:**\
+- Receive animation triggers as props instead of internal state\
+- Display ball drop animations with provided parameters\
+- Handle animation completion callbacks\
+- Maintain visual fidelity of existing animation\
+\
+**Integration Points:**\
+- Controlled by AnimationContainer\
+- Receives ball drop triggers via props\
+- Reports completion events back to container\
+\
+```typescript\
+// src/components/presentation/CircleFillAnimation.tsx - Updated stub\
+export interface CircleFillAnimationProps \{\
+  onBallDrop?: () => void;\
+  ballCount: number;\
+  isAnimating: boolean;\
+  animationParams: AnimationParams;\
+  onAnimationComplete?: (ballId: string) => void;\
+\}\
+\
+export const CircleFillAnimation: React.FC<CircleFillAnimationProps> = (\{\
+  // ... props\
+\}) => \{\
+  // Convert existing internal state to props-driven\
+  // Remove business logic, keep animation rendering\
+  // Report events to parent container\
+\};\
+```\
+\
+#### 4. Create Animation Integration Hook\
+**File:** `src/hooks/useAnimationIntegration.ts`\
+**Purpose:** Custom hook that provides animation functionality to todo operations\
+**Context:** Bridges todo completion events with animation triggers\
+\
+**Key Functionality:**\
+- Integrate with todo completion events\
+- Queue animations based on point values\
+- Handle animation completion states\
+- Provide animation status to UI components\
+\
+**Integration Points:**\
+- Used by useTodoOperations hook\
+- Calls AnimationService methods\
+- Provides animation state to UI\
+\
+```typescript\
+// src/hooks/useAnimationIntegration.ts - Stub\
+export function useAnimationIntegration() \{\
+  const animationService = useService(SERVICE_TOKENS.ANIMATION_SERVICE);\
+  \
+  const triggerAnimation = useCallback((points: number) => \{\
+    // Queue animation based on points\
+  \}, [animationService]);\
+  \
+  return \{\
+    triggerAnimation,\
+    isAnimating: /* ... */,\
+    queueLength: /* ... */\
+  \};\
+\}\
+```\
+\
+### Files to Create:\
+- `src/components/containers/AnimationContainer.tsx`\
+- `src/hooks/useAnimationIntegration.ts`\
+- `src/services/factories/AnimationServiceFactory.ts`\
+\
+### Files to Modify:\
+- `src/services/AnimationService.ts` (implement interface)\
+- `src/components/presentation/CircleFillAnimation.tsx` (make props-driven)\
+- `src/hooks/useTodoOperations.ts` (integrate animation triggers)\
+\
+### Acceptance Criteria:\
+- [ ] Animation service properly injected via DI container\
+- [ ] Ball animations trigger on todo completion\
+- [ ] Animation queue manages multiple simultaneous animations\
+- [ ] Animation parameters configurable via config service\
+- [ ] Existing animation visual behavior preserved\
+- [ ] No direct coupling between animation and todo logic\
+\
+---}

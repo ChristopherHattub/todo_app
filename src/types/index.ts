@@ -98,4 +98,30 @@ export interface AppState {
   error: string | null;
 }
 
-export type { StorageResponse, ServiceError, TodoServiceResponse } from './services'; 
+export type { StorageResponse, ServiceError, TodoServiceResponse } from './services';
+
+// Storage-specific types
+export type { 
+  MigrationResult, 
+  StorageProviderCapabilities, 
+  StorageProviderType, 
+  StorageQuotaInfo, 
+  IndexedDBConfig, 
+  StorageBackupMetadata 
+} from './storage';
+
+// Configuration types
+export type {
+  PhysicsConfig,
+  AnimationConfig,
+  StorageConfig,
+  UIConfig,
+  FeatureFlags,
+  PerformanceConfig,
+  AppConfig,
+  Environment,
+  EnvironmentConfig,
+  ConfigChangeCallback,
+  ConfigChangeEvent,
+  ConfigValidationSchema
+} from './config'; 

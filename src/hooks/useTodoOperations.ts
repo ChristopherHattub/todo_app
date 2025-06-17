@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useService } from '../core/di/react';
 import { useStateManagement } from './useStateManagement';
+import { useAnimationIntegration } from './useAnimationIntegration';
 import { ITodoService } from '../services/interfaces/ITodoService';
 import { SERVICE_TOKENS } from '../core/di/ServiceToken';
 import { TodoItem } from '../types';
@@ -19,15 +20,19 @@ export interface TodoOperationsHook {
   };
   isLoading: boolean;
   error: Error | null;
+  // Animation state from integration
+  isAnimating: boolean;
+  animationQueueLength: number;
 }
 
 export function useTodoOperations(): TodoOperationsHook {
   const todoService = useService(SERVICE_TOKENS.TODO_SERVICE);
   const { state, dispatch } = useStateManagement();
+  const { triggerAnimationWithTaskMovement, isAnimating, queueLength } = useAnimationIntegration();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const handleAddTodo = useCallback(async (text: string, description: string = '', pointValue: number = 1) => {
+  const handleAddTodo = useCallback(async (text: string, description = '', pointValue = 1) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -122,6 +127,18 @@ export function useTodoOperations(): TodoOperationsHook {
           daySchedule: response.daySchedule
         }
       });
+
+      // Trigger animation with task movement when todo is completed
+      if (response.todo && response.todo.pointValue) {
+        triggerAnimationWithTaskMovement(
+          response.todo.pointValue, 
+          id,
+          () => {
+            // Optional callback when animation completes
+            console.log(`Animation completed for todo ${id} with ${response.todo.pointValue} points`);
+          }
+        );
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to toggle todo';
       setError(err instanceof Error ? err : new Error(errorMessage));
@@ -133,7 +150,7 @@ export function useTodoOperations(): TodoOperationsHook {
     } finally {
       setIsLoading(false);
     }
-  }, [todoService, dispatch]);
+  }, [todoService, dispatch, triggerAnimationWithTaskMovement]);
 
   const loadTodosForDate = useCallback(async (date: Date) => {
     setIsLoading(true);
@@ -193,6 +210,8 @@ export function useTodoOperations(): TodoOperationsHook {
     setYear,
     dayStats,
     isLoading,
-    error
+    error,
+    isAnimating,
+    animationQueueLength: queueLength
   };
 } 

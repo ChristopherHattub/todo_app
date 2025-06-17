@@ -1,0 +1,157 @@
+/* Error Fallback Component Styles */
+.error-fallback {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%);
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+}
+
+.error-fallback__container {
+  max-width: 600px;
+  text-align: center;
+}
+
+.error-fallback__icon {
+  margin-bottom: 1.5rem;
+  color: #dc2626;
+}
+
+.error-fallback__content {
+  margin-bottom: 2rem;
+}
+
+.error-fallback__title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #991b1b;
+}
+
+.error-fallback__message {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #7f1d1d;
+  margin-bottom: 1rem;
+}
+
+.error-fallback__details {
+  text-align: left;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.error-fallback__details summary {
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.error-fallback__details summary:hover {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.error-fallback__technical {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+
+.error-fallback__technical > div {
+  margin-bottom: 1rem;
+}
+
+.error-fallback__technical strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #991b1b;
+}
+
+.error-fallback__technical pre {
+  background: rgba(17, 24, 39, 0.9);
+  color: #f9fafb;
+  padding: 0.75rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.error-fallback__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.error-fallback__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.error-fallback__button--primary {
+  background: #dc2626;
+  color: white;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+}
+
+.error-fallback__button--primary:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+}
+
+.error-fallback__button--secondary {
+  background: white;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+}
+
+.error-fallback__button--secondary:hover {
+  background: rgba(220, 38, 38, 0.1);
+  transform: translateY(-1px);
+}
+
+.error-fallback__button--tertiary {
+  background: transparent;
+  color: #7f1d1d;
+  border: 1px solid #7f1d1d;
+}
+
+.error-fallback__button--tertiary:hover {
+  background: rgba(127, 29, 29, 0.1);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .error-fallback {
+    padding: 1rem;
+  }
+
+  .error-fallback__actions {
+    flex-direction: column;
+  }
+
+  .error-fallback__button {
+    justify-content: center;
+  }
+} 

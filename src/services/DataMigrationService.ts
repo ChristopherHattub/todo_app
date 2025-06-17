@@ -1,8 +1,11 @@
 import { StorageResponse, ServiceError } from '../types';
+import { MigrationResult, StorageProviderType } from '../types/storage';
+import { IStorageService } from './interfaces/IStorageService';
 import { LocalStorageService } from './LocalStorageService';
 
 /**
  * Service for handling data migrations and backward compatibility
+ * Supports both version migrations and storage provider transitions
  */
 export class DataMigrationService {
   private static readonly MIGRATION_VERSION_KEY = 'todo_app_migration_version';
@@ -14,6 +17,169 @@ export class DataMigrationService {
   private static readonly VERSION_HISTORY = [
     '1.0.0' // Initial version
   ];
+
+  /**
+   * Instance-based constructor for provider-to-provider migration
+   */
+  constructor(
+    private sourceStorage: IStorageService,
+    private targetStorage: IStorageService
+  ) {}
+
+  /**
+   * Migrate data from source storage to target storage
+   */
+  public async migrateData(): Promise<MigrationResult> {
+    const startTime = Date.now();
+    const errors: string[] = [];
+    let itemsMigrated = 0;
+
+    try {
+      // Get source storage info
+      const sourceInfo = this.sourceStorage.getStorageInfo();
+      const targetInfo = this.targetStorage.getStorageInfo();
+
+      console.log(`Starting migration from ${sourceInfo.type} to ${targetInfo.type}`);
+
+      // Export data from source
+      const exportResult = await this.sourceStorage.exportData();
+      if (!exportResult.success) {
+        throw new Error(`Failed to export from source: ${exportResult.error?.message}`);
+      }
+
+      // Count items in export data
+      try {
+        const exportedData = JSON.parse(exportResult.data);
+        itemsMigrated = Object.keys(exportedData).length;
+      } catch {
+        // If we can't parse to count, just proceed
+      }
+
+      // Import data to target
+      const importResult = await this.targetStorage.importData(exportResult.data);
+      if (!importResult.success) {
+        throw new Error(`Failed to import to target: ${importResult.error?.message}`);
+      }
+
+      const duration = Date.now() - startTime;
+
+      return {
+        success: true,
+        fromProvider: sourceInfo.type,
+        toProvider: targetInfo.type,
+        itemsMigrated,
+        errors,
+        duration
+      };
+
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown migration error';
+      errors.push(errorMessage);
+
+      return {
+        success: false,
+        fromProvider: this.sourceStorage.getStorageInfo().type,
+        toProvider: this.targetStorage.getStorageInfo().type,
+        itemsMigrated: 0,
+        errors,
+        duration
+      };
+    }
+  }
+
+  /**
+   * Validate data integrity between source and target
+   */
+  public async validateMigration(): Promise<StorageResponse<boolean>> {
+    try {
+      // Export data from both storages
+      const sourceExport = await this.sourceStorage.exportData();
+      const targetExport = await this.targetStorage.exportData();
+
+      if (!sourceExport.success || !targetExport.success) {
+        return {
+          data: false,
+          success: false,
+          error: {
+            type: 'MIGRATION',
+            message: 'Failed to export data for validation',
+            timestamp: new Date(),
+            recoverable: true
+          }
+        };
+      }
+
+      // Compare the data
+      const sourceData = JSON.parse(sourceExport.data);
+      const targetData = JSON.parse(targetExport.data);
+
+      const isValid = JSON.stringify(sourceData) === JSON.stringify(targetData);
+
+      return {
+        data: isValid,
+        success: true
+      };
+
+    } catch (error) {
+      return {
+        data: false,
+        success: false,
+        error: {
+          type: 'MIGRATION',
+          message: error instanceof Error ? error.message : 'Validation failed',
+          timestamp: new Date(),
+          recoverable: true,
+          context: error
+        }
+      };
+    }
+  }
+
+  /**
+   * Create backup before migration
+   */
+  public async createMigrationBackup(label: string = 'pre-migration'): Promise<StorageResponse<string>> {
+    try {
+      const exportResult = await this.sourceStorage.exportData();
+      if (!exportResult.success) {
+        throw new Error('Failed to export data for backup');
+      }
+
+      // Store backup with provider info
+      const backupKey = `todo_app_migration_backup_${this.sourceStorage.getStorageInfo().type}_${label}_${Date.now()}`;
+      
+      // If source is localStorage, store backup there; otherwise use localStorage as backup storage
+      if (this.sourceStorage instanceof LocalStorageService) {
+        localStorage.setItem(backupKey, exportResult.data);
+      } else {
+        // Use localStorage as backup storage for other providers
+        try {
+          localStorage.setItem(backupKey, exportResult.data);
+        } catch (error) {
+          console.warn('Could not create localStorage backup:', error);
+        }
+      }
+
+      return {
+        data: backupKey,
+        success: true
+      };
+
+    } catch (error) {
+      return {
+        data: '',
+        success: false,
+        error: {
+          type: 'MIGRATION',
+          message: error instanceof Error ? error.message : 'Failed to create backup',
+          timestamp: new Date(),
+          recoverable: true,
+          context: error
+        }
+      };
+    }
+  }
 
   /**
    * Check if migration is needed and perform migration
@@ -216,10 +382,16 @@ export class DataMigrationService {
     
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key?.startsWith('todo_app_backup_') || key?.startsWith('todo_app_manual_backup_')) {
+      if (key?.startsWith('todo_app_backup_') || key?.startsWith('todo_app_manual_backup_') || key?.startsWith('todo_app_migration_backup_')) {
         const parts = key.split('_');
         const timestamp = parseInt(parts[parts.length - 1]);
-        const type = key.includes('manual') ? 'manual' : 'migration';
+        let type = 'migration';
+        
+        if (key.includes('manual')) {
+          type = 'manual';
+        } else if (key.includes('migration_backup')) {
+          type = 'migration_backup';
+        }
         
         backups.push({ key, timestamp, type });
       }
