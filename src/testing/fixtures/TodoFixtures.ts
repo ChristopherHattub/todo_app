@@ -81,7 +81,8 @@ export const createCompletedTodos = (): TodoItem[] => [
  * Day schedule fixture
  */
 export const createDaySchedule = (overrides: Partial<DaySchedule> = {}): DaySchedule => {
-  const todos = createTodoCollection(3);
+  const defaultTodos = createTodoCollection(3);
+  const todos = overrides.todoItems || defaultTodos;
   const completedTodos = todos.filter(todo => todo.isCompleted);
   const incompleteTodos = todos.filter(todo => !todo.isCompleted);
   
@@ -92,7 +93,12 @@ export const createDaySchedule = (overrides: Partial<DaySchedule> = {}): DaySche
     todoItems: todos,
     completedTodoItems: completedTodos,
     incompleteTodoItems: incompleteTodos,
-    ...overrides
+    ...overrides,
+    // Re-ensure the correct arrays are used if todoItems was overridden
+    ...(overrides.todoItems && {
+      completedTodoItems: overrides.todoItems.filter(todo => todo.isCompleted),
+      incompleteTodoItems: overrides.todoItems.filter(todo => !todo.isCompleted)
+    })
   };
 };
 

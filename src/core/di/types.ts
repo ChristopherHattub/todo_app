@@ -31,6 +31,10 @@ export interface IServiceContainer {
   createScope(): IServiceScope;
   isRegistered<T>(token: ServiceToken<T>): boolean;
   dispose(): Promise<void>;
+  
+  // New method to help with scoped resolution
+  hasInstance<T>(token: ServiceToken<T>): boolean;
+  getRegistration<T>(token: ServiceToken<T>): ServiceRegistration<T> | null;
 }
 
 export interface IServiceScope extends IServiceContainer {

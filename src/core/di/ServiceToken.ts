@@ -15,7 +15,7 @@ export function createServiceToken<T>(name: string, description?: string): Servi
 }
 
 // Common service tokens
-export const SERVICE_TOKENS = {
+export const SERVICE_TOKENS = Object.freeze({
   // Storage Services
   TODO_SERVICE: createServiceToken<ITodoService>('ITodoService', 'Todo data operations'),
   STORAGE_SERVICE: createServiceToken<IStorageService>('IStorageService', 'Data persistence'),
@@ -29,4 +29,4 @@ export const SERVICE_TOKENS = {
   
   // Configuration
   CONFIG_SERVICE: createServiceToken<IConfigService>('IConfigService', 'Application configuration')
-} as const; 
+} as const); 

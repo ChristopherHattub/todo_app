@@ -6,6 +6,7 @@ export class ServiceContainer implements IServiceContainer {
   private singletonInstances = new Map<symbol, any>();
   private scopes = new Set<ServiceScope>();
   private isDisposed = false;
+  private resolutionStack = new Set<symbol>();
 
   register<T>(
     token: ServiceToken<T>, 
@@ -50,7 +51,17 @@ export class ServiceContainer implements IServiceContainer {
       return null;
     }
 
-    return this.createInstance(registration);
+    // Check for circular dependency
+    if (this.resolutionStack.has(token.symbol)) {
+      throw new ServiceError(`Circular dependency detected: ${token.name}`, token);
+    }
+
+    try {
+      this.resolutionStack.add(token.symbol);
+      return this.createInstance(registration);
+    } finally {
+      this.resolutionStack.delete(token.symbol);
+    }
   }
 
   createScope(): IServiceScope {
@@ -65,19 +76,40 @@ export class ServiceContainer implements IServiceContainer {
            this.registrations.has(token.symbol);
   }
 
+  hasInstance<T>(token: ServiceToken<T>): boolean {
+    return this.singletonInstances.has(token.symbol);
+  }
+
+  getRegistration<T>(token: ServiceToken<T>): ServiceRegistration<T> | null {
+    return this.registrations.get(token.symbol) || null;
+  }
+
   async dispose(): Promise<void> {
     if (this.isDisposed) return;
 
     // Dispose all scopes
-    await Promise.all(Array.from(this.scopes).map(scope => scope.dispose()));
+    const scopePromises = Array.from(this.scopes).map(async scope => {
+      try {
+        await scope.dispose();
+      } catch (error) {
+        // Log disposal error but don't throw
+        console.warn('Error disposing scope:', error);
+      }
+    });
+    await Promise.all(scopePromises);
     this.scopes.clear();
 
     // Dispose singleton instances
     const singletonEntries = Array.from(this.singletonInstances.entries());
     for (const [symbol, instance] of singletonEntries) {
-      const registration = this.registrations.get(symbol);
-      if (registration?.factory.dispose) {
-        await registration.factory.dispose(instance);
+      try {
+        const registration = this.registrations.get(symbol);
+        if (registration?.factory.dispose) {
+          await registration.factory.dispose(instance);
+        }
+      } catch (error) {
+        // Log disposal error but don't throw
+        console.warn('Error disposing singleton instance:', error);
       }
     }
 
@@ -116,13 +148,18 @@ export class ServiceContainer implements IServiceContainer {
     try {
       const result = registration.factory.create(this);
       
-      // Handle async factory creation
+      // Handle async factory creation - check this first before wrapping in general error
       if (result instanceof Promise) {
-        throw new ServiceError('Async service factories not supported in synchronous resolve', registration.token);
+        throw new Error('Async service factories not supported');
       }
       
       return result;
     } catch (error) {
+      // If it's the specific async error, throw it directly
+      if (error instanceof Error && error.message === 'Async service factories not supported') {
+        throw new ServiceError(error.message, registration.token, error);
+      }
+      
       throw new ServiceError(
         `Failed to create service: ${registration.token.name}`,
         registration.token,

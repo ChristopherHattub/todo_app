@@ -45,13 +45,20 @@ export function useService<T>(token: ServiceToken<T>): T {
 
 export function useOptionalService<T>(token: ServiceToken<T>): T | null {
   const container = useServiceContainer();
-  const [service, setService] = React.useState<T | null>(() => container.tryResolve(token));
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+  
+  // Use a ref to store the current service value
+  const serviceRef = React.useRef<T | null>(null);
+  
+  // Update the service value on each render
+  serviceRef.current = container.tryResolve(token);
 
   React.useEffect(() => {
-    setService(container.tryResolve(token));
+    // Force update when container or token changes
+    forceUpdate();
   }, [container, token]);
 
-  return service;
+  return serviceRef.current;
 }
 
 // Higher-order component for service injection
